@@ -1,6 +1,6 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
+import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
 
 const MIN_PASSWORD_LENGTH = 6;
 
@@ -36,16 +36,5 @@ export class RegisterDto {
     @MinLength(MIN_PASSWORD_LENGTH, {
         message: `min_password_length_is_${MIN_PASSWORD_LENGTH}`,
     })
-    password: string;
-}
-
-export class LoginDto {
-    @ApiProperty({ example: "alex@example.com", description: "Your email in the system" })
-    @IsEmail({}, { message: "invalid_email" })
-    email: string;
-
-    @ApiProperty({ example: "StRoNgPaSsWOrd228", description: "Your password in the system" })
-    @IsString({ message: "invalid_password" })
-    @IsNotEmpty({ message: "password_empty" })
     password: string;
 }
