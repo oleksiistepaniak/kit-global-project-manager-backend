@@ -87,11 +87,39 @@ describe("ProjectController POST /projects", () => {
             });
     });
 
+    it("invalid_members_not_array", () => {
+        return request(env.httpServer)
+            .post("/projects")
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({ name: "Kit Global API", members: "just_a_string" })
+            .expect(400)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toContain("members_must_be_array");
+            });
+    });
+
+    it("invalid_member_id", () => {
+        return request(env.httpServer)
+            .post("/projects")
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({ name: "Kit Global API", members: ["not_a_mongo_id_at_all"] })
+            .expect(400)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toContain("invalid_member_id");
+            });
+    });
+
     it("success_creation", async () => {
         const response = await request(env.httpServer)
             .post("/projects")
             .set("Authorization", `Bearer ${env.user1.accessToken}`)
-            .send({ name: "Kit Global API", description: "First test project" })
+            .send({
+                name: "Kit Global API",
+                description: "First test project",
+                members: [env.user2.userId]
+            })
             .expect(201);
 
         const body = response.body as ProjectResponseDto;
@@ -100,13 +128,43 @@ describe("ProjectController POST /projects", () => {
         expect(body).toHaveProperty("id");
         expect(body.name).toBe("Kit Global API");
         expect(body.description).toBe("First test project");
-        expect(body).not.toHaveProperty("ownerId"); // without this field in DTO
+        expect(body.ownerId).toBe(env.user1.userId);
+        expect(Array.isArray(body.members)).toBe(true);
+        expect(body.members).toContain(env.user2.userId);
+        expect(body).toHaveProperty("createdAt");
+        expect(body).toHaveProperty("updatedAt");
 
         // check db state
         const projectInDb = await projectModel.findById(body.id);
         assert(projectInDb);
-        expect(projectInDb).not.toBeNull();
         expect(projectInDb.name).toBe("Kit Global API");
-        expect(projectInDb.ownerId.toString()).toBe(env.user1.userId); // check owner id
+        expect(projectInDb.ownerId.toString()).toBe(env.user1.userId);
+        expect(projectInDb.members.map(m => m.toString())).toContain(env.user2.userId);
+    });
+
+    it("success_creation_with_members_logic", async () => {
+        const response = await request(env.httpServer)
+            .post("/projects")
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({
+                name: "Shared Project",
+                members: [env.user1.userId, env.user2.userId, env.user2.userId],
+            })
+            .expect(201);
+
+        const body = response.body as ProjectResponseDto;
+
+        // check client response
+        expect(body.name).toBe("Shared Project");
+        expect(body.ownerId).toBe(env.user1.userId);
+
+        expect(body.members.length).toBe(1);
+        expect(body.members).toStrictEqual([env.user2.userId]);
+
+        // check db state
+        const projectInDb = await projectModel.findById(body.id);
+        assert(projectInDb);
+        expect(projectInDb.members.length).toBe(1);
+        expect(projectInDb.members.toString()).toBe(env.user2.userId);
     });
 });

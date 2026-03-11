@@ -36,6 +36,14 @@ describe("ProjectController GET /projects (Pagination & Filtering)", () => {
             description: "User 2 Secret description",
             ownerId: env.user2.userId,
         });
+
+        // creating a project with members
+        await projectModel.create({
+            name: "Shared Project For Omega",
+            description: "Omega can read this!",
+            ownerId: env.user2.userId,
+            members: [env.user3.userId], // with members
+        });
     });
 
     afterAll(async () => {
@@ -173,6 +181,35 @@ describe("ProjectController GET /projects (Pagination & Filtering)", () => {
                 expect(body.data.length).toBe(15);
                 expect(body.data[0].id).toBe(generatedProjectsIds[0]);
                 expect(body.data[14].id).toBe(generatedProjectsIds[14]);
+            });
+    });
+
+    it("success_get_projects_as_member", () => {
+        return request(env.httpServer)
+            .get("/projects")
+            .set("Authorization", `Bearer ${env.user3.accessToken}`)
+            .expect(200)
+            .expect((res) => {
+                const body = res.body as PaginatedProjectsResponseDto;
+
+                // user 3 has only one project as a member
+                expect(body.data.length).toBe(1);
+                expect(body.data[0].name).toBe("Shared Project For Omega");
+            });
+    });
+
+    it("success_get_projects_as_owner_with_shared", () => {
+        return request(env.httpServer)
+            .get("/projects")
+            .set("Authorization", `Bearer ${env.user2.accessToken}`)
+            .expect(200)
+            .expect((res) => {
+                const body = res.body as PaginatedProjectsResponseDto;
+
+                // user 2 has two projects
+                expect(body.data.length).toBe(2);
+                expect(body.data[0].name).toBe("Shared Project For Omega");
+                expect(body.data[1].name).toBe("User 2 Secret Project");
             });
     });
 

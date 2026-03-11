@@ -13,8 +13,12 @@ export class Project {
 
     @Prop({ type: Types.ObjectId, ref: "User", required: true, index: true })
     ownerId: Types.ObjectId;
+
+    @Prop({ type: [{ type: Types.ObjectId, ref: "User" }], default: [] })
+    members: Types.ObjectId[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
 
 ProjectSchema.index({ ownerId: 1, _id: -1 });
+ProjectSchema.index({ members: 1, _id: -1 });

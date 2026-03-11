@@ -16,6 +16,7 @@ export interface CoreEnv {
 export interface TestEnv extends CoreEnv {
     user1: TestUser;
     user2: TestUser;
+    user3: TestUser;
 }
 
 export interface ErrorResponse {

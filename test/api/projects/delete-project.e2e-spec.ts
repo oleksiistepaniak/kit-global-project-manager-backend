@@ -69,6 +69,30 @@ describe("ProjectController DELETE /projects/:id", () => {
             });
     });
 
+    it("forbidden_for_member", async () => {
+        await projectModel.findByIdAndUpdate(targetProjectId, { members: [env.user2.userId] });
+
+        return request(env.httpServer)
+            .delete(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user2.accessToken}`)
+            .expect(403)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toEqual(["only_owner_can_delete_project"]);
+            });
+    });
+
+    it("access_denied_for_outsider", () => {
+        return request(env.httpServer)
+            .delete(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user3.accessToken}`)
+            .expect(404)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toEqual(["project_not_found"]);
+            });
+    });
+
     it("success_delete", async () => {
         await request(env.httpServer)
             .delete(`/projects/${targetProjectId}`)

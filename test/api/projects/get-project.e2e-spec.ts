@@ -31,6 +31,7 @@ describe("ProjectController GET /projects/:id", () => {
             name: "Kit Global API",
             description: "First test project",
             ownerId: env.user1.userId,
+            members: [env.user2.userId],
         });
 
         targetProjectId = project.id;
@@ -46,10 +47,10 @@ describe("ProjectController GET /projects/:id", () => {
             });
     });
 
-    it("access_denied_for_another_user", () => {
+    it("access_denied_for_outsider", () => {
         return request(env.httpServer)
             .get(`/projects/${targetProjectId}`)
-            .set("Authorization", `Bearer ${env.user2.accessToken}`)
+            .set("Authorization", `Bearer ${env.user3.accessToken}`)
             .expect(404)
             .expect((res) => {
                 const body = res.body as ErrorResponse;
@@ -69,10 +70,23 @@ describe("ProjectController GET /projects/:id", () => {
             });
     });
 
-    it("success_get_one", () => {
+    it("success_get_one_as_owner", () => {
         return request(env.httpServer)
             .get(`/projects/${targetProjectId}`)
             .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .expect(200)
+            .expect((res) => {
+                const body = res.body as ProjectResponseDto;
+                expect(body.id).toBe(targetProjectId);
+                expect(body.name).toBe("Kit Global API");
+                expect(body.description).toBe("First test project");
+            });
+    });
+
+    it("success_get_one_as_member", () => {
+        return request(env.httpServer)
+            .get(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user2.accessToken}`)
             .expect(200)
             .expect((res) => {
                 const body = res.body as ProjectResponseDto;

@@ -119,6 +119,45 @@ describe("ProjectController PATCH /projects/:id", () => {
             });
     });
 
+    it("forbidden_for_member", async () => {
+        await projectModel.findByIdAndUpdate(targetProjectId, { members: [env.user2.userId] });
+
+        // user 2 has no access for update - he's a member
+        return request(env.httpServer)
+            .patch(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user2.accessToken}`)
+            .send({ name: "Hacked Name" })
+            .expect(403)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toEqual(["only_owner_can_update_project"]);
+            });
+    });
+
+    it("invalid_members_format", async () => {
+        return request(env.httpServer)
+            .patch(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({ members: "not_an_array" })
+            .expect(400)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toContain("members_must_be_array");
+            });
+    });
+
+    it("invalid_member_id_in_array", async () => {
+        return request(env.httpServer)
+            .patch(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({ members: ["invalid_id"] })
+            .expect(400)
+            .expect((res) => {
+                const body = res.body as ErrorResponse;
+                expect(body.messages).toContain("invalid_member_id");
+            });
+    });
+
     it("success_update (partial)", () => {
         return request(env.httpServer)
             .patch(`/projects/${targetProjectId}`)
@@ -145,5 +184,31 @@ describe("ProjectController PATCH /projects/:id", () => {
                 expect(body.name).toBe("Brand New Name");
                 expect(body.description).toBe("Brand New Desc");
             });
+    });
+
+    it("success_update_members_logic", async () => {
+        const response = await request(env.httpServer)
+            .patch(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({
+                members: [env.user2.userId, env.user3.userId, env.user2.userId, env.user1.userId]
+            })
+            .expect(200);
+
+        const body = response.body as ProjectResponseDto;
+
+        expect(body.members.length).toBe(2);
+        expect(body.members).toContain(env.user2.userId);
+        expect(body.members).toContain(env.user3.userId);
+        expect(body.members).not.toContain(env.user1.userId);
+
+        const emptyRes = await request(env.httpServer)
+            .patch(`/projects/${targetProjectId}`)
+            .set("Authorization", `Bearer ${env.user1.accessToken}`)
+            .send({ members: [] })
+            .expect(200);
+
+        const emptyBody = emptyRes.body as ProjectResponseDto;
+        expect(emptyBody.members.length).toBe(0);
     });
 });

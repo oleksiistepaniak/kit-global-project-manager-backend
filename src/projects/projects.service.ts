@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { Project, ProjectDocument } from "./schemas/project.schema";
@@ -11,9 +11,14 @@ export class ProjectsService {
     constructor(@InjectModel(Project.name) private projectModel: Model<ProjectDocument>) {}
 
     async create(createProjectDto: CreateProjectDto, userId: string): Promise<ProjectDocument> {
+        const uniqueMembers = Array.from(new Set(createProjectDto.members || [])).filter(
+            (memberId) => memberId !== userId,
+        );
+
         const createdProject: ProjectDocument = await this.projectModel.create({
             ...createProjectDto,
             ownerId: userId,
+            members: uniqueMembers,
         });
 
         return createdProject;
@@ -29,7 +34,7 @@ export class ProjectsService {
 
         const projects = await this.projectModel
             .find({
-                ownerId: userId,
+                $or: [{ ownerId: userId }, { members: userId }],
                 ...(name && { name: { $regex: name, $options: "i" } }),
                 ...(description && { description: { $regex: description, $options: "i" } }),
                 ...(cursor && { _id: sortOrder === "desc" ? { $lt: cursor } : { $gt: cursor } }),
@@ -49,7 +54,12 @@ export class ProjectsService {
     }
 
     async findOne(id: string, userId: string): Promise<ProjectDocument> {
-        const project = await this.projectModel.findOne({ _id: id, ownerId: userId }).exec();
+        const project = await this.projectModel
+            .findOne({
+                _id: id,
+                $or: [{ ownerId: userId }, { members: userId }],
+            })
+            .exec();
 
         if (!project) throw new NotFoundException(["project_not_found"]);
 
@@ -57,17 +67,28 @@ export class ProjectsService {
     }
 
     async update(id: string, userId: string, updateProjectDto: UpdateProjectDto): Promise<ProjectDocument> {
-        await this.findOne(id, userId);
+        const project = await this.findOne(id, userId);
+
+        if (project.ownerId.toString() !== userId) throw new ForbiddenException(["only_owner_can_update_project"]);
+
+        const dataToUpdate = { ...updateProjectDto };
+        if (updateProjectDto.members) {
+            dataToUpdate.members = Array.from(new Set(updateProjectDto.members)).filter(
+                (memberId) => memberId !== userId,
+            );
+        }
 
         const updatedProject = (await this.projectModel
-            .findByIdAndUpdate(id, updateProjectDto, { returnDocument: "after" })
+            .findByIdAndUpdate(id, dataToUpdate, { returnDocument: "after" })
             .exec()) as ProjectDocument;
 
         return updatedProject;
     }
 
     async remove(id: string, userId: string): Promise<void> {
-        await this.findOne(id, userId);
+        const project = await this.findOne(id, userId);
+
+        if (project.ownerId.toString() !== userId) throw new ForbiddenException(["only_owner_can_delete_project"]);
 
         await this.projectModel.findByIdAndDelete(id).exec();
     }
