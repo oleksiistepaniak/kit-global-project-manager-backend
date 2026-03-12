@@ -5,6 +5,7 @@ import { getModelToken } from "@nestjs/mongoose";
 import { Model, Types } from "mongoose";
 import { Project, ProjectDocument } from "../../../src/projects/schemas/project.schema";
 import { Task, TaskDocument } from "../../../src/tasks/schemas/task.schema";
+import { Comment, CommentDocument } from "../../../src/comments/schemas/comment.schema";
 import { setupTestEnvironment } from "../../test-environment";
 import { ErrorResponse, TestEnv } from "../../types";
 
@@ -12,6 +13,7 @@ describe("TasksController DELETE /tasks/:id", () => {
     let env: TestEnv;
     let projectModel: Model<ProjectDocument>;
     let taskModel: Model<TaskDocument>;
+    let commentModel: Model<CommentDocument>;
 
     let targetProjectId: string;
     let alienProjectId: string;
@@ -23,10 +25,14 @@ describe("TasksController DELETE /tasks/:id", () => {
     let parentTaskId: string; // parent task
     let subtaskIds: string[] = [];
 
+    let parentCommentId: string;
+    let subtaskCommentId: string;
+
     beforeAll(async () => {
         env = await setupTestEnvironment();
         projectModel = env.app.get<Model<ProjectDocument>>(getModelToken(Project.name));
         taskModel = env.app.get<Model<TaskDocument>>(getModelToken(Task.name));
+        commentModel = env.app.get<Model<CommentDocument>>(getModelToken(Comment.name));
     });
 
     afterAll(async () => {
@@ -34,6 +40,7 @@ describe("TasksController DELETE /tasks/:id", () => {
             await env.dbConnection.collection("users").deleteMany({});
             await projectModel.deleteMany({});
             await taskModel.deleteMany({});
+            await commentModel.deleteMany({});
             await env.app.close();
         }
     });
@@ -41,6 +48,7 @@ describe("TasksController DELETE /tasks/:id", () => {
     beforeEach(async () => {
         await projectModel.deleteMany({});
         await taskModel.deleteMany({});
+        await commentModel.deleteMany({});
 
         const project1 = await projectModel.create({
             name: "Alpha Project",
@@ -96,6 +104,20 @@ describe("TasksController DELETE /tasks/:id", () => {
             parentTaskId: parent.id,
         });
         subtaskIds = [sub1.id, sub2.id];
+
+        const parentComment = await commentModel.create({
+            text: "Comment on parent task",
+            taskId: parent.id,
+            authorId: env.user1.userId,
+        });
+        parentCommentId = parentComment.id;
+
+        const subtaskComment = await commentModel.create({
+            text: "Comment on subtask",
+            taskId: sub1.id,
+            authorId: env.user2.userId,
+        });
+        subtaskCommentId = subtaskComment.id;
     });
 
     it("unauthorized", () => {
@@ -166,7 +188,7 @@ describe("TasksController DELETE /tasks/:id", () => {
         expect(taskInDb).toBeNull();
     });
 
-    it("success_cascade_delete", async () => {
+    it("success_cascade_delete_tasks_subtasks_and_all_comments", async () => {
         // user 1 has successfully deleted parent task
         await request(env.httpServer)
             .delete(`/tasks/${parentTaskId}`)
@@ -180,8 +202,14 @@ describe("TasksController DELETE /tasks/:id", () => {
         // verify sub tasks are also deleted
         const sub1InDb = await taskModel.findById(subtaskIds[0]);
         const sub2InDb = await taskModel.findById(subtaskIds[1]);
-
         expect(sub1InDb).toBeNull();
         expect(sub2InDb).toBeNull();
+
+        // verify comments are also deleted (for both parent and subtasks)
+        const parentCommentInDb = await commentModel.findById(parentCommentId);
+        const subtaskCommentInDb = await commentModel.findById(subtaskCommentId);
+
+        expect(parentCommentInDb).toBeNull();
+        expect(subtaskCommentInDb).toBeNull();
     });
 });

@@ -6,6 +6,7 @@ import { ProjectsService } from "../projects/projects.service";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { GetTasksQueryDto } from "./dto/get-tasks-query.dto";
+import { CommentDocument, Comment } from "../comments/schemas/comment.schema";
 
 interface GetProjectAnalyticsResult {
     total: { count: number }[];
@@ -18,6 +19,7 @@ interface GetProjectAnalyticsResult {
 export class TasksService {
     constructor(
         @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
+        @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
         private projectsService: ProjectsService,
     ) {}
 
@@ -209,6 +211,11 @@ export class TasksService {
 
         if (task.ownerId.toString() !== userId && project.ownerId.toString() !== userId)
             throw new ForbiddenException(["only_task_author_or_project_owner_can_delete"]);
+
+        const subtasks = await this.taskModel.find({ parentTaskId: id }).select("_id").exec();
+        const taskIdsToDelete = [id, ...subtasks.map((t) => t._id.toString())];
+
+        await this.commentModel.deleteMany({ taskId: { $in: taskIdsToDelete } }).exec();
 
         await this.taskModel.deleteMany({ parentTaskId: id }).exec();
 
