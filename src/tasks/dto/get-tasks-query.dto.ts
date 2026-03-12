@@ -26,12 +26,12 @@ export class GetTasksQueryDto {
 
     @ApiPropertyOptional({ description: "Filter by status (can be array)", type: [String] })
     @IsOptional()
-    @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+    @Transform(({ value }): string[] => (Array.isArray(value) ? value : [value]))
     status?: string[];
 
     @ApiPropertyOptional({ description: "Filter by tags (can be array)", type: [String] })
     @IsOptional()
-    @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+    @Transform(({ value }): string[] => (Array.isArray(value) ? value : [value]))
     tags?: string[];
 
     @ApiPropertyOptional({ enum: ["createdAt", "deadline"], default: "createdAt" })

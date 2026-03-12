@@ -40,6 +40,9 @@ export class Task {
 
     @Prop({ type: Types.ObjectId, ref: "Task", default: null, index: true })
     parentTaskId?: Types.ObjectId;
+
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

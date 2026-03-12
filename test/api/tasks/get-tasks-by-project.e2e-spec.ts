@@ -88,7 +88,7 @@ describe("TasksController GET /tasks/project/:projectId (Filters, Sort, Paginate
                 createdAt: new Date(now - i * 1000), // task 1 is newest, task 15 is oldest
                 deadline: finalDeadline,
                 location: { type: "Point", coordinates: coords },
-            } as any);
+            });
 
             generatedTaskIds.push(task.id);
         }

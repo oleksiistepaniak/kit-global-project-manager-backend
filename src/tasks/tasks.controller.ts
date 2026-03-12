@@ -10,6 +10,7 @@ import { plainToInstance } from "class-transformer";
 import { TaskDocument } from "./schemas/task.schema";
 import { PaginatedTasksResponseDto } from "./dto/paginated-tasks.dto";
 import { GetTasksQueryDto } from "./dto/get-tasks-query.dto";
+import { ParseMongoIdPipe } from "../common/pipes/parse-mongo-id.pipe";
 
 @ApiTags("Tasks")
 @ApiBearerAuth("JWT-auth")
@@ -39,17 +40,15 @@ export class TasksController {
     @ApiResponse({ status: 400, description: "Invalid query parameters" })
     @ApiResponse({ status: 404, description: "Project not found or access denied" })
     async findAllByProject(
-        @Param("projectId") projectId: string,
+        @Param("projectId", ParseMongoIdPipe) projectId: string,
         @Query() query: GetTasksQueryDto,
         @CurrentUser("userId") userId: string,
     ): Promise<PaginatedTasksResponseDto> {
         const { data, nextCursor } = await this.tasksService.findAllByProject(projectId, userId, query);
 
         return {
-            data: plainToInstance(
-                TaskResponseDto,
-                data.map((t: TaskDocument) => t.toJSON()),
-                { excludeExtraneousValues: true },
+            data: data.map((t: TaskDocument) =>
+                plainToInstance(TaskResponseDto, t.toJSON(), { excludeExtraneousValues: true }),
             ),
             nextCursor,
         };
@@ -59,7 +58,10 @@ export class TasksController {
     @ApiOperation({ summary: "Retrieve a task by id" })
     @ApiResponse({ status: 200, description: "Task was found successfully", type: TaskResponseDto })
     @ApiResponse({ status: 404, description: "Task not found or access denied" })
-    async findOne(@Param("id") id: string, @CurrentUser("userId") userId: string): Promise<TaskResponseDto> {
+    async findOne(
+        @Param("id", ParseMongoIdPipe) id: string,
+        @CurrentUser("userId") userId: string,
+    ): Promise<TaskResponseDto> {
         const task = await this.tasksService.findOne(id, userId);
 
         return plainToInstance(TaskResponseDto, task.toJSON(), { excludeExtraneousValues: true });
@@ -72,7 +74,7 @@ export class TasksController {
     @ApiResponse({ status: 403, description: "Forbidden cross-project operations" })
     @ApiResponse({ status: 404, description: "Task, project, or parent task not found" })
     async update(
-        @Param("id") id: string,
+        @Param("id", ParseMongoIdPipe) id: string,
         @Body() updateTaskDto: UpdateTaskDto,
         @CurrentUser("userId") userId: string,
     ): Promise<TaskResponseDto> {
@@ -86,7 +88,7 @@ export class TasksController {
     @ApiResponse({ status: 200, description: "Task was deleted successfully" })
     @ApiResponse({ status: 403, description: "Only task author or project owner can delete" })
     @ApiResponse({ status: 404, description: "Task not found or access denied" })
-    async remove(@Param("id") id: string, @CurrentUser("userId") userId: string): Promise<void> {
+    async remove(@Param("id", ParseMongoIdPipe) id: string, @CurrentUser("userId") userId: string): Promise<void> {
         await this.tasksService.remove(id, userId);
     }
 }

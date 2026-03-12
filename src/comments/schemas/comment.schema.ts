@@ -13,6 +13,9 @@ export class Comment {
 
     @Prop({ type: Types.ObjectId, ref: "User", required: true })
     authorId: Types.ObjectId;
+
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);

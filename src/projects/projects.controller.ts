@@ -9,6 +9,7 @@ import { plainToInstance } from "class-transformer";
 import { CurrentUser } from "../common/decorators/current-user.decorator";
 import { PaginatedProjectsResponseDto } from "./dto/paginated-projects.dto";
 import { GetProjectsQueryDto } from "./dto/get-projects-query.dto";
+import { ParseMongoIdPipe } from "../common/pipes/parse-mongo-id.pipe";
 
 @ApiTags("Projects")
 @ApiBearerAuth("JWT-auth")
@@ -52,7 +53,10 @@ export class ProjectsController {
     @ApiOperation({ summary: "Retrieve a project by id" })
     @ApiResponse({ status: 200, description: "Project was found successfully" })
     @ApiResponse({ status: 404, description: "project not found or access denied" })
-    async findOne(@Param("id") id: string, @CurrentUser("userId") userId: string): Promise<ProjectResponseDto> {
+    async findOne(
+        @Param("id", ParseMongoIdPipe) id: string,
+        @CurrentUser("userId") userId: string,
+    ): Promise<ProjectResponseDto> {
         const project = await this.projectsService.findOne(id, userId);
 
         return plainToInstance(ProjectResponseDto, project.toJSON(), {
@@ -66,7 +70,7 @@ export class ProjectsController {
     @ApiResponse({ status: 400, description: "Invalid project params" })
     @ApiResponse({ status: 404, description: "project not found or access denied" })
     async update(
-        @Param("id") id: string,
+        @Param("id", ParseMongoIdPipe) id: string,
         @Body() updateProjectDto: UpdateProjectDto,
         @CurrentUser("userId") userId: string,
     ): Promise<ProjectResponseDto> {
@@ -81,7 +85,7 @@ export class ProjectsController {
     @ApiOperation({ summary: "Remove a project by id" })
     @ApiResponse({ status: 200, description: "Project was deleted" })
     @ApiResponse({ status: 404, description: "project not found or access denied" })
-    remove(@Param("id") id: string, @CurrentUser("userId") userId: string): Promise<void> {
+    remove(@Param("id", ParseMongoIdPipe) id: string, @CurrentUser("userId") userId: string): Promise<void> {
         return this.projectsService.remove(id, userId);
     }
 }

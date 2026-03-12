@@ -5,6 +5,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
+import { CommentsModule } from "./comments/comments.module";
 
 @Module({
     // TODO: from config should be taken
@@ -13,6 +14,7 @@ import { TasksModule } from "./tasks/tasks.module";
         AuthModule,
         ProjectsModule,
         TasksModule,
+        CommentsModule,
     ],
     controllers: [AppController],
     providers: [AppService],
