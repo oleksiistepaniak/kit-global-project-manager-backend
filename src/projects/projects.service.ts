@@ -5,10 +5,16 @@ import { Project, ProjectDocument } from "./schemas/project.schema";
 import { CreateProjectDto } from "./dto/create-project.dto";
 import { UpdateProjectDto } from "./dto/update-project.dto";
 import { GetProjectsQueryDto } from "./dto/get-projects-query.dto";
+import { TaskDocument, Task } from "../tasks/schemas/task.schema";
+import { CommentDocument, Comment } from "../comments/schemas/comment.schema";
 
 @Injectable()
 export class ProjectsService {
-    constructor(@InjectModel(Project.name) private projectModel: Model<ProjectDocument>) {}
+    constructor(
+        @InjectModel(Project.name) private projectModel: Model<ProjectDocument>,
+        @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
+        @InjectModel(Comment.name) private commentModel: Model<CommentDocument>,
+    ) {}
 
     async create(createProjectDto: CreateProjectDto, userId: string): Promise<ProjectDocument> {
         const uniqueMembers = Array.from(new Set(createProjectDto.members || [])).filter(
@@ -89,6 +95,15 @@ export class ProjectsService {
         const project = await this.findOne(id, userId);
 
         if (project.ownerId.toString() !== userId) throw new ForbiddenException(["only_owner_can_delete_project"]);
+
+        const tasks = await this.taskModel.find({ projectId: id }).select('_id').exec();
+        const taskIds = tasks.map(t => t._id.toString());
+
+        if (taskIds.length > 0) {
+            await this.commentModel.deleteMany({ taskId: { $in: taskIds } }).exec();
+        }
+
+        await this.taskModel.deleteMany({ projectId: id }).exec();
 
         await this.projectModel.findByIdAndDelete(id).exec();
     }
