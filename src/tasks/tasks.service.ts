@@ -1,11 +1,18 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { Task, TaskDocument } from "./schemas/task.schema";
 import { ProjectsService } from "../projects/projects.service";
 import { CreateTaskDto } from "./dto/create-task.dto";
 import { UpdateTaskDto } from "./dto/update-task.dto";
 import { GetTasksQueryDto } from "./dto/get-tasks-query.dto";
+
+interface GetProjectAnalyticsResult {
+    total: { count: number }[];
+    byStatus: { _id: string; count: number }[];
+    overdue: { count: number }[];
+    topTags: { _id: string; count: number }[];
+}
 
 @Injectable()
 export class TasksService {
@@ -102,6 +109,61 @@ export class TasksService {
         }
 
         return { data: tasks, nextCursor };
+    }
+
+    async getProjectAnalytics(projectId: string, userId: string) {
+        await this.projectsService.findOne(projectId, userId);
+
+        const now = new Date();
+
+        const result = await this.taskModel
+            .aggregate<GetProjectAnalyticsResult>([
+                {
+                    $match: {
+                        $or: [{ projectId: projectId }, { projectId: new Types.ObjectId(projectId) }],
+                    },
+                },
+                {
+                    $facet: {
+                        total: [{ $count: "count" }],
+
+                        byStatus: [{ $group: { _id: "$status", count: { $sum: 1 } } }],
+
+                        overdue: [
+                            {
+                                $match: {
+                                    deadline: { $lt: now },
+                                    status: { $ne: "DONE" },
+                                },
+                            },
+                            { $count: "count" },
+                        ],
+
+                        topTags: [
+                            { $unwind: "$tags" },
+                            { $group: { _id: "$tags", count: { $sum: 1 } } },
+                            { $sort: { count: -1 } },
+                            { $limit: 5 },
+                        ],
+                    },
+                },
+            ])
+            .exec();
+
+        const facetData: GetProjectAnalyticsResult = result[0];
+
+        return {
+            totalTasks: facetData.total[0]?.count || 0,
+            overdueTasks: facetData.overdue[0]?.count || 0,
+            statusCounts: facetData.byStatus.map((item) => ({
+                status: item._id,
+                count: item.count,
+            })),
+            topTags: facetData.topTags.map((item) => ({
+                tag: item._id,
+                count: item.count,
+            })),
+        };
     }
 
     async findOne(id: string, userId: string): Promise<TaskDocument> {

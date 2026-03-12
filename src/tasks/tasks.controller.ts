@@ -11,6 +11,7 @@ import { TaskDocument } from "./schemas/task.schema";
 import { PaginatedTasksResponseDto } from "./dto/paginated-tasks.dto";
 import { GetTasksQueryDto } from "./dto/get-tasks-query.dto";
 import { ParseMongoIdPipe } from "../common/pipes/parse-mongo-id.pipe";
+import { TaskAnalyticsResponseDto } from "./dto/task-analytics.dto";
 
 @ApiTags("Tasks")
 @ApiBearerAuth("JWT-auth")
@@ -52,6 +53,19 @@ export class TasksController {
             ),
             nextCursor,
         };
+    }
+
+    @Get("project/:projectId/analytics")
+    @ApiOperation({ summary: "Get analytics for a specific project" })
+    @ApiResponse({ status: 200, type: TaskAnalyticsResponseDto })
+    @ApiResponse({ status: 404, description: "Project not found or access denied" })
+    async getProjectAnalytics(
+        @Param("projectId", ParseMongoIdPipe) projectId: string,
+        @CurrentUser("userId") userId: string,
+    ): Promise<TaskAnalyticsResponseDto> {
+        const analytics = await this.tasksService.getProjectAnalytics(projectId, userId);
+
+        return plainToInstance(TaskAnalyticsResponseDto, analytics, { excludeExtraneousValues: true });
     }
 
     @Get(":id")
