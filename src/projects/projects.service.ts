@@ -96,8 +96,8 @@ export class ProjectsService {
 
         if (project.ownerId.toString() !== userId) throw new ForbiddenException(["only_owner_can_delete_project"]);
 
-        const tasks = await this.taskModel.find({ projectId: id }).select('_id').exec();
-        const taskIds = tasks.map(t => t._id.toString());
+        const tasks = await this.taskModel.find({ projectId: id }).select("_id").exec();
+        const taskIds = tasks.map((t) => t._id.toString());
 
         if (taskIds.length > 0) {
             await this.commentModel.deleteMany({ taskId: { $in: taskIds } }).exec();
