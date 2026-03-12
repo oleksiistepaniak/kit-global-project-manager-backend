@@ -24,6 +24,7 @@ Advanced Task & Project Management System built with **NestJS**, **TypeScript**,
 * **Validation:** Class-validator & Class-transformer
 * **Documentation:** Swagger (OpenAPI)
 * **Testing:** Jest & Supertest (Full E2E Coverage)
+* **Containerization:** Docker & Docker Compose
 * **Config:** Custom Static AppConfig Pattern
 
 ---
@@ -32,16 +33,11 @@ Advanced Task & Project Management System built with **NestJS**, **TypeScript**,
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/oleksiistepaniak/kit-global-project-manager-backend
+git clone [https://github.com/oleksiistepaniak/kit-global-project-manager-backend](https://github.com/oleksiistepaniak/kit-global-project-manager-backend)
 cd kit-global-project-manager-backend
-```
+````
 
-### 2. Install dependencies
-```bash
-npm install
-```
-
-### 3. Environment Configuration
+### 2. Environment Configuration
 Create a `.env` file in the root directory and fill in your credentials:
 ```env
 PORT=3000
@@ -52,8 +48,34 @@ JWT_EXPIRES_IN=24h
 
 ---
 
-## 🚀 Running the App
+## 🐳 Running with Docker (Recommended)
 
+The project includes a `Dockerfile` and a `docker-compose.yml` for easy deployment. To start the application and a MongoDB database instance simultaneously, simply run:
+
+```bash
+docker-compose up -d --build
+```
+
+The API will automatically connect to the containerized database and be available at `http://localhost:3000/api/docs`.
+
+To stop the containers, run:
+
+```bash
+docker-compose down
+```
+
+---
+
+## 💻 Running Locally (Manual Setup)
+
+If you prefer to run the application without Docker, ensure you have an active MongoDB instance.
+
+### 1. Install dependencies
+```bash
+npm install
+```
+
+### 2. Run the App
 ```bash
 # development mode
 npm run start:dev
@@ -96,4 +118,4 @@ src/
 ```
 
 ---
-Developed by **Oleksii Stepaniak**  🚀
+Developed by **Oleksii Stepaniak** 🚀
