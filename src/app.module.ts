@@ -6,16 +6,10 @@ import { AppService } from "./app.service";
 import { ProjectsModule } from "./projects/projects.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { CommentsModule } from "./comments/comments.module";
+import { AppConfig } from "./config/app.config";
 
 @Module({
-    // TODO: from config should be taken
-    imports: [
-        MongooseModule.forRoot("mongodb://localhost:27017/kit_global_task"),
-        AuthModule,
-        ProjectsModule,
-        TasksModule,
-        CommentsModule,
-    ],
+    imports: [MongooseModule.forRoot(AppConfig.mongoUri), AuthModule, ProjectsModule, TasksModule, CommentsModule],
     controllers: [AppController],
     providers: [AppService],
 })

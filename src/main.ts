@@ -3,6 +3,7 @@ import { AppModule } from "./app.module";
 import { ValidationPipe } from "@nestjs/common";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { HttpExceptionFilter } from "./common/filters/http-exception.filter";
+import { printConfig } from "./config/app.config";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
@@ -46,6 +47,7 @@ async function bootstrap() {
     await app.listen(3000);
     console.log(`🚀 Server started successfully! --> http://localhost:3000`);
     console.log(`📚 Swagger is ready and available! --> http://localhost:3000/api/docs`);
+    printConfig();
 }
 
 bootstrap().catch((error) => console.error(error));

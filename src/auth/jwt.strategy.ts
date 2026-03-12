@@ -2,6 +2,7 @@ import { ExtractJwt, Strategy } from "passport-jwt";
 import { PassportStrategy } from "@nestjs/passport";
 import { Injectable } from "@nestjs/common";
 import { IPayloadStruct } from "./types";
+import { AppConfig } from "../config/app.config";
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -9,8 +10,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
             ignoreExpiration: false,
-            // TODO: from config should be taken
-            secretOrKey: "SUPER_SECRET_KEY_FOR_KIT_GLOBAL",
+            secretOrKey: AppConfig.jwtSecret,
         });
     }
 
