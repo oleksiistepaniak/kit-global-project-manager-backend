@@ -12,6 +12,7 @@ Advanced Task & Project Management System built with **NestJS**, **TypeScript**,
 * **📂 Hierarchical Tasks:** Support for nested subtasks with automated validation of project consistency.
 * **💬 Discussion Engine:** Fully integrated comment system for every task with author-only edit/delete permissions.
 * **🔐 Secure Auth:** JWT-based authentication with Passport.js, featuring a custom Singleton configuration for environment security.
+* **⚙️ Automated CI Pipeline:** GitHub Actions workflow configured for automated linting, building, and comprehensive E2E testing using a volatile MongoDB container on every push/PR.
 * **💎 Clean Architecture:** 100% Type safety, Custom Pipes for MongoID validation, and DTO-based data flow with `class-transformer`.
 
 ---
