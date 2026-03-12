@@ -7,8 +7,8 @@ export const AppConfig = {
     mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/kit_global_task",
 
     jwtSecret: process.env.JWT_SECRET || "SUPER_SECRET_KEY_FOR_KIT_GLOBAL",
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    jwtExpiresIn: (process.env.JWT_EXPIRES_IN || "24h") as any,
+
+    jwtExpiresIn: (process.env.JWT_EXPIRES_IN || "24h") as "24h",
 
     port: parseInt(process.env.PORT || "3000", 10),
 
