@@ -64,7 +64,7 @@ describe("TasksController GET /tasks/project/:projectId/analytics", () => {
         const pastDeadline = new Date(now - 100000); // overdue
         const futureDeadline = new Date(now + 100000); // not overdue
 
-        // task 1: overdue, TODO
+        // task 1: overdue, todo_status
         await taskModel.create({
             title: "Task 1",
             projectId: targetProjectId,
@@ -74,7 +74,7 @@ describe("TasksController GET /tasks/project/:projectId/analytics", () => {
             tags: ["backend", "urgent"],
         });
 
-        // task 2: not overdue, TODO
+        // task 2: not overdue, todo_status
         await taskModel.create({
             title: "Task 2",
             projectId: targetProjectId,
@@ -115,7 +115,7 @@ describe("TasksController GET /tasks/project/:projectId/analytics", () => {
 
         // expected math results for targetProjectId:
         // total: 5
-        // statuses: TODO(2), IN_PROGRESS(2), DONE(1)
+        // statuses: TODO_status(2), IN_PROGRESS(2), DONE(1)
         // overdue: task 1 and task 3 -> total 2
         // tags: backend(3), urgent(3), frontend(2), api(1), bug(1)
     });
