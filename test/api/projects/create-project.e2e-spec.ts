@@ -1,3 +1,5 @@
+// noinspection DuplicatedCode
+
 import request from "supertest";
 import { getModelToken } from "@nestjs/mongoose";
 import { Model } from "mongoose";
@@ -118,7 +120,7 @@ describe("ProjectController POST /projects", () => {
             .send({
                 name: "Kit Global API",
                 description: "First test project",
-                members: [env.user2.userId]
+                members: [env.user2.userId],
             })
             .expect(201);
 
@@ -139,7 +141,7 @@ describe("ProjectController POST /projects", () => {
         assert(projectInDb);
         expect(projectInDb.name).toBe("Kit Global API");
         expect(projectInDb.ownerId.toString()).toBe(env.user1.userId);
-        expect(projectInDb.members.map(m => m.toString())).toContain(env.user2.userId);
+        expect(projectInDb.members.map((m) => m.toString())).toContain(env.user2.userId);
     });
 
     it("success_creation_with_members_logic", async () => {

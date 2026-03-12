@@ -1,3 +1,5 @@
+// noinspection DuplicatedCode
+
 import request from "supertest";
 import { ProjectResponseDto } from "../../../src/projects/dto/project.dto";
 import { getModelToken } from "@nestjs/mongoose";
@@ -191,7 +193,7 @@ describe("ProjectController PATCH /projects/:id", () => {
             .patch(`/projects/${targetProjectId}`)
             .set("Authorization", `Bearer ${env.user1.accessToken}`)
             .send({
-                members: [env.user2.userId, env.user3.userId, env.user2.userId, env.user1.userId]
+                members: [env.user2.userId, env.user3.userId, env.user2.userId, env.user1.userId],
             })
             .expect(200);
 

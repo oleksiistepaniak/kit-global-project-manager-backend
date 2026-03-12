@@ -27,7 +27,7 @@ export class ProjectsController {
     ): Promise<ProjectResponseDto> {
         const project = await this.projectsService.create(createProjectDto, userId);
 
-        return plainToInstance(ProjectResponseDto, project.toObject(), {
+        return plainToInstance(ProjectResponseDto, project.toJSON(), {
             excludeExtraneousValues: true,
         });
     }
@@ -43,7 +43,7 @@ export class ProjectsController {
         const { data, nextCursor } = await this.projectsService.findAll(userId, query);
 
         return {
-            data: data.map((p) => plainToInstance(ProjectResponseDto, p.toObject(), { excludeExtraneousValues: true })),
+            data: data.map((p) => plainToInstance(ProjectResponseDto, p.toJSON(), { excludeExtraneousValues: true })),
             nextCursor,
         };
     }
@@ -55,7 +55,7 @@ export class ProjectsController {
     async findOne(@Param("id") id: string, @CurrentUser("userId") userId: string): Promise<ProjectResponseDto> {
         const project = await this.projectsService.findOne(id, userId);
 
-        return plainToInstance(ProjectResponseDto, project.toObject(), {
+        return plainToInstance(ProjectResponseDto, project.toJSON(), {
             excludeExtraneousValues: true,
         });
     }
@@ -72,7 +72,7 @@ export class ProjectsController {
     ): Promise<ProjectResponseDto> {
         const project = await this.projectsService.update(id, userId, updateProjectDto);
 
-        return plainToInstance(ProjectResponseDto, project.toObject(), {
+        return plainToInstance(ProjectResponseDto, project.toJSON(), {
             excludeExtraneousValues: true,
         });
     }
